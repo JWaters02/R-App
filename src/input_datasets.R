@@ -29,14 +29,16 @@ gdp_df2 = gdp_df %>%
   mutate(SourceName = 'Office for National Statistics') %>%
   select(SeriesName, Frequency, Date, Value, SourceLink, SourceName)
 
+# Calculate GDP Growth
 gdp_growth = gdp_df2 %>%
-  mutate(oldValue=Value) %>%
   arrange(Frequency, Date) %>%
-  group_by(Frequency, Date) %>%
-  mutate(Value=oldValue / lag(oldValue)-1) %>%
-  select(-oldValue) %>%
-  mutate(SeriesName='GDPGrowth')
-
+  group_by(Frequency) %>%
+  mutate(oldValue=Value) %>%
+  mutate(lagOldValue=dplyr::lag(oldValue, order_by = Date)) %>%
+  mutate(Value=oldValue / lagOldValue -1) %>%
+  mutate(SeriesName='GDPGrowth') %>%
+  select("SeriesName", "Frequency", "Date", "Value", "SourceLink", "SourceName") %>%
+  filter(is.na(Value)==FALSE)
 
 # Load consumer price index data
 cpi_df <- read.csv(file = './data/CPIH Annual Rate All Items 2015=100.csv', header = TRUE)
@@ -94,4 +96,16 @@ hpi_df2 = hpi_df %>%
 
 
 # Combine data frames into one
-total_df <- bind_rows(gdp_df2, gdp_growth, cpi_df2, unemployment_df2, hpi_df2)
+total_df <- bind_rows(gdp_df2, gdp_growth, cpi_df2, unemployment_df2, hpi_df2) %>%
+  mutate(Date=as.Date(Date))
+
+rm('cpi_df2',
+   'cpi_df',
+   'gdp_df2',
+   'gdp_df',
+   'gdp_growth',
+   'hpi_df',
+   'hpi_df2',
+   'unemployment_df2',
+   'unemployment_df')
+

@@ -13,12 +13,20 @@ library(shinyjs)
 library(readr)
 library(tidyverse)
 library(plotly)
+library(rstudioapi)    
+library(stringi)
+library(lubridate)
+
+
+# Set the working directory
+loc=rstudioapi::getActiveDocumentContext()$path
+loc=str_sub(loc,1,stri_locate_last(loc,fixed='/')[1])
+setwd(loc)
 
 
 # Source functions & data
 source("src/functions.R")
 source("src/app_data.R")
-
 
 # Setup UI
 ui <- dashboardPage(skin = "red",
@@ -154,27 +162,24 @@ server <- function(input, output, session) {
                        inputId = "frequency",
                        choices = get_frequency_types(input$trendType))
     
-    # Load in the right source name and links
     output$plotSource <- renderText({
-     a(href = get_series_sources(input$trendType)[1],
-       get_series_sources(input$trendType)[2])
+      paste0('Source: ', get_series_sources(input$trendType)[2]$SourceName)
     })
     output$tableSource <- renderText({
-     a(href = get_series_sources(input$trendType)[1],
-       get_series_sources(input$trendType)[2])
+      paste0('Source: ', get_series_sources(input$trendType)[2]$SourceName)
     })
-    
+
     # When the frequency radio selection is changed
     observeEvent(input$frequency, {
       # Load in the right data slider range
       updateSliderInput(session,
                        inputId = 'dateSlider',
-                       min = get_series_date_extremes(input$trendType, input$frequency)[1, 1],
-                       max = get_series_date_extremes(input$trendType, input$frequency)[2, 1],
-                       value = c(get_series_date_extremes(input$trendType, input$frequency)[1, 1],
-                                 get_series_date_extremes(input$trendType, input$frequency)[2, 1]))
+                       min = year(get_series_date_extremes(input$trendType, input$frequency)[1, 1]),
+                       max = year(get_series_date_extremes(input$trendType, input$frequency)[2, 1]),
+                       value = c(year(get_series_date_extremes(input$trendType, input$frequency)[1, 1]),
+                                 year(get_series_date_extremes(input$trendType, input$frequency)[2, 1])))
       
-      # Save currently selected min and max values
+        # Save currently selected min and max values
       observe({
         val <- input$dateSlider
         # Update plot and table on date slider changed
@@ -182,7 +187,7 @@ server <- function(input, output, session) {
           # Plot
           output$linePlot <- renderPlotly({
             plot <- plot_data(get_series_data(input$trendType, input$frequency),
-                              as.Date(input$dateSlider, "%Y-%m-%d"), input$trendType)
+                              input$dateSlider, input$trendType)
             ggplotly(plot)
           })
           
@@ -223,3 +228,4 @@ server <- function(input, output, session) {
 }
 
 shinyApp(ui = ui, server = server)
+
