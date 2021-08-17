@@ -33,12 +33,15 @@ convert_monthly_dates <- function(dates_to_convert, match_col, match_regex) {
   return(dates)
 }
 
+
+
 # Plot the values given
 plot_data <- function(df, limits, dataName = "Value") {
-  ggplot(data = df) +
+    limits2=c(as.Date(paste0(limits[1],'-01-31')), as.Date(paste0(limits[2],'-12-31')))
+    ggplot(data = df) +
     geom_line(aes(x = as.Date(Date), y = Value), linetype = "solid", color = "red") +
     scale_x_date(name = "Year",
-                 limits = limits,
+                 limits = limits2,
                  labels = date_format("%Y")) +
     scale_y_continuous(name = dataName, labels = comma)
 }
