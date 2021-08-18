@@ -1,9 +1,7 @@
 ##############################
 # Main app
 ##############################
-# TODO: Fix GDP quarterly scaling
-# TODO: Fix monthly dates plotting
-# TODO: Implement data compares section (one plot)
+# TODO: Fix why compareTypes input condition is always true
 
 
 # Load libraries
@@ -106,7 +104,7 @@ ui <- dashboardPage(skin = "red",
                                choices = c("Compare", "Summary"),
                                selected = "Compare"),
                   
-                  # If compare data is selected
+                  # If summary stats is selected
                   conditionalPanel(
                     condition = "input.overviewType == 'Summary'",
                     
@@ -114,25 +112,36 @@ ui <- dashboardPage(skin = "red",
                     selectInput(inputId = "trendTypeSummary", label = strong("Trend Type"),
                                 choices = get_series_names(),
                                 selected = get_series_names()[1]),
+                    
+                    # Select the summary type to show
+                    checkboxGroupInput(inputId = "summaryType", label = strong("Summaries to Show"),
+                                       choices = get_first_summary_statistics())
                   ),
                   
-                  # If summary stats is selected
+                  # If compare data is selected
                   conditionalPanel(
                     condition = "input.overviewType == 'Compare'",
                     
                     # Select all the trend types to compare
                     checkboxGroupInput(inputId = "compareTypes", label = strong("Trend Types to Compare"),
-                                       choices = get_series_names())
-                  ),
-                  
-                  # Select the summary type to show
-                  checkboxGroupInput(inputId = "summaryType", label = strong("Summaries to Show"),
-                                     choices = get_first_summary_statistics())
+                                       choices = get_series_names()),
+                    
+                    # Select the date range of data to plot 
+                    sliderInput(inputId = "dateSliderCompare",
+                                label = strong("Timeframe"),
+                                min = get_first_series_date_extremes()[1],
+                                max = get_first_series_date_extremes()[2],
+                                value = c(get_first_series_date_extremes()[1],
+                                          get_first_series_date_extremes()[2]),
+                                step = 1,
+                                dragRange = TRUE,
+                                sep = "")
+                  )
                 )
               ),
               
               # Row 2 contains outputs
-              fluidRow(
+              fluidRow(id = "outputsRow",
                 box(
                   title = "Outputs", status = "success", solidHeader = TRUE,
                   width = 12, collapsible = TRUE,
@@ -186,8 +195,8 @@ server <- function(input, output, session) {
         observeEvent(input$dateSlider, {
           # Plot
           output$linePlot <- renderPlotly({
-            plot <- plot_data(get_series_data(input$trendType, input$frequency),
-                              input$dateSlider, input$trendType)
+            plot <- plot_line_data(get_series_data(input$trendType, input$frequency),
+                              input$dateSlider, input$trendType, FALSE)
             ggplotly(plot)
           })
           
@@ -204,6 +213,14 @@ server <- function(input, output, session) {
   # COMPARE DATA TAB
   # When the input tab is changed
   observeEvent(input$tabs, {
+    observeEvent(input$overviewType, {
+      if (input$overviewType == 'Compare') {
+        shinyjs::hide(id = "outputsRow")
+      } else {
+        shinyjs::show(id = "outputsRow")
+      }
+    })
+    
     # When the trend type is changed
     observeEvent(input$trendTypeSummary, {
       # Set up the check box group with values
@@ -220,8 +237,16 @@ server <- function(input, output, session) {
       
       # When the summary checks are changed
       observeEvent(input$compareTypes, {
-        # Plot the graph with the selected types
-        
+        print(length(input$compareTypes))
+        # Make sure that the number of options entered isn't 0
+        if (length(input$compareTypes) >= 1) { # TODO: Fix why condition is always true
+          # Plot the graph with the selected types
+          output$comparePlot <- renderPlotly({
+            plot <- plot_line_data(get_series_data_from_list_no_frequency(input$compareTypes),
+                                   input$dateSliderCompare, "Value", TRUE)
+            ggplotly(plot)
+          })  
+        }
       })
     })
   })

@@ -52,6 +52,12 @@ get_series_data_no_frequency <- function(seriesName) {
   return(datasets_df)
 }
 
+# Generates a data frame of the dates and values from a list of series types
+get_series_data_from_list_no_frequency <- function(seriesNames) {
+  datasets_df <- select(filter(total_df, SeriesName == seriesNames), SeriesName, Date, Value)
+  return(datasets_df)
+}
+
 # Gets the source name and link from a specified series
 get_series_sources <- function(seriesName) {
   sourceLinks_df <- distinct(select(filter(total_df, SeriesName == seriesName), SourceLink))

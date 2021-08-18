@@ -40,6 +40,7 @@ gdp_growth = gdp_df2 %>%
   select("SeriesName", "Frequency", "Date", "Value", "SourceLink", "SourceName") %>%
   filter(is.na(Value)==FALSE)
 
+
 # Load consumer price index data
 cpi_df <- read.csv(file = './data/CPIH Annual Rate All Items 2015=100.csv', header = TRUE)
 colnames(cpi_df) <- c('DateChar', 'CPI')
