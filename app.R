@@ -17,8 +17,8 @@ library(lubridate)
 
 
 # Set the working directory
-loc=rstudioapi::getActiveDocumentContext()$path
-loc=str_sub(loc,1,stri_locate_last(loc,fixed='/')[1])
+loc = rstudioapi::getActiveDocumentContext()$path
+loc = str_sub(loc, 1, stri_locate_last(loc, fixed = '/')[1])
 setwd(loc)
 
 
@@ -51,12 +51,12 @@ ui <- dashboardPage(skin = "red",
                   selectInput(inputId = "trendType", label = strong("Trend Type"),
                               choices = get_series_names(),
                               selected = get_series_names()[1]),
-                  br(),
+
                   # Select the frequency of data to plot 
                   radioButtons(inputId = "frequency",
                                label = strong("Frequency"),
                                choices = get_frequency_types(get_series_names()[1])),
-                  br(),
+
                   # Select the date range of data to plot 
                   sliderInput(inputId = "dateSlider",
                               label = strong("Timeframe"),
@@ -113,6 +113,11 @@ ui <- dashboardPage(skin = "red",
                                 choices = get_series_names(),
                                 selected = get_series_names()[1]),
                     
+                    # Select the frequency of data to plot 
+                    radioButtons(inputId = "frequencySummary",
+                                 label = strong("Frequency"),
+                                 choices = get_frequency_types(get_series_names()[1])),
+                    
                     # Select the summary type to show
                     checkboxGroupInput(inputId = "summaryType", label = strong("Summaries to Show"),
                                        choices = get_first_summary_statistics())
@@ -125,6 +130,15 @@ ui <- dashboardPage(skin = "red",
                     # Select all the trend types to compare
                     checkboxGroupInput(inputId = "compareTypes", label = strong("Trend Types to Compare"),
                                        choices = get_series_names()),
+                    
+                    actionButton(inputId = "compareTypesSubmit", label = "Submit Choice"),
+                    br(),
+                    br(),
+                    
+                    # Select the frequency of data to plot 
+                    radioButtons(id = "freqComparerBtns", inputId = "frequencyCompare",
+                                 label = strong("Frequency"),
+                                 choices = c("Annual", "Quarter/Month")),
                     
                     # Select the date range of data to plot 
                     sliderInput(inputId = "dateSliderCompare",
@@ -154,7 +168,7 @@ ui <- dashboardPage(skin = "red",
                 box(
                   title = "Plots", status = "primary", solidHeader = TRUE,
                   width = 12, collapsible = TRUE,
-                  plotlyOutput(outputId = "comparePlot")
+                  plotlyOutput(outputId = "compareAndSummaryPlot")
                 )
               )
       )
@@ -202,7 +216,7 @@ server <- function(input, output, session) {
           
           # Table
           output$table <- renderTable({
-            get_series_data(input$trendType, input$frequency)
+            convert_to_string_date_series_data(input$trendType, input$frequency)
           }, striped = TRUE, align = "c")
         })
       })
@@ -210,7 +224,7 @@ server <- function(input, output, session) {
   })
   
   
-  # COMPARE DATA TAB
+  # COMPARE AND SUMMARIES DATA TAB
   # When the input tab is changed
   observeEvent(input$tabs, {
     observeEvent(input$overviewType, {
@@ -221,6 +235,31 @@ server <- function(input, output, session) {
       }
     })
     
+    # COMPARE HANDLING
+    # When the compare types submit button is pressed
+    observeEvent(input$compareTypesSubmit, {
+      # Plot the graph with the selected types
+      output$compareAndSummaryPlot <- renderPlotly({
+        isolate({
+          plot <- plot_line_data(get_series_data_from_list(input$compareTypes, input$frequencyCompare),
+                                 input$dateSliderCompare, "Value", TRUE)
+          ggplotly(plot)  
+        })
+      })
+    })
+    
+    observeEvent(input$frequencyCompare, {
+      # Plot the graph with the selected types
+      output$compareAndSummaryPlot <- renderPlotly({
+        isolate({
+          plot <- plot_line_data(get_series_data_from_list(input$compareTypes, input$frequencyCompare),
+                                 input$dateSliderCompare, "Value", TRUE)
+          ggplotly(plot)  
+        })
+      })
+    })
+    
+    # SUMMARY HANDLING
     # When the trend type is changed
     observeEvent(input$trendTypeSummary, {
       # Set up the check box group with values
@@ -235,18 +274,10 @@ server <- function(input, output, session) {
         paste("Summaries: ", summaries)
       })
       
-      # When the summary checks are changed
-      observeEvent(input$compareTypes, {
-        print(length(input$compareTypes))
-        # Make sure that the number of options entered isn't 0
-        if (length(input$compareTypes) >= 1) { # TODO: Fix why condition is always true
-          # Plot the graph with the selected types
-          output$comparePlot <- renderPlotly({
-            plot <- plot_line_data(get_series_data_from_list_no_frequency(input$compareTypes),
-                                   input$dateSliderCompare, "Value", TRUE)
-            ggplotly(plot)
-          })  
-        }
+      
+      output$compareAndSummaryPlot <- renderPlotly({
+        plot <- plot_box_data(get_series_data_no_frequency(input$trendTypeSummary))
+        ggplotly(plot)
       })
     })
   })

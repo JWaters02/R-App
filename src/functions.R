@@ -1,6 +1,9 @@
 ##############################
 # Functions
 ##############################
+# TODO: Fix legend not being put at bottom of plot
+
+
 # Load libraries
 library(shiny)
 library(stringr)
@@ -46,6 +49,7 @@ plot_line_data <- function(df, limits, dataName = "Value", isPlottingMultiple = 
   } else {
     ggplot(data = df) +
       geom_line(aes(x = as.Date(Date), y = Value, group = SeriesName, color = SeriesName), linetype = "solid") +
+      theme(legend.position = "bottom") + 
       scale_x_date(name = "Year",
                    limits = limits2,
                    labels = date_format("%Y")) +
@@ -54,18 +58,7 @@ plot_line_data <- function(df, limits, dataName = "Value", isPlottingMultiple = 
 }
 
 # Plot the values given to a box plot
-plot_box_data <- function(df, limits) {
-  
-}
-
-
-##############################
-# CREATE YOUR DATA SPECIFIC FUNCTIONS HERE
-##############################
-# Calculate GDP growth = GDP / lag(GDP) - 1
-calculate_gdp_growth <- function(df) {
-  gdp <- select(df, Value)
-  gdp_lag <- lag(gdp)
-  gdp_growth <- (gdp / (gdp_lag) - 1)
-  return(gdp_growth)
+plot_box_data <- function(df) {
+  ggplot(data = df) +
+    geom_boxplot(aes(y = Value))
 }

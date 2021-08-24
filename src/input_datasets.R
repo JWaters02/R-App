@@ -33,12 +33,12 @@ gdp_df2 = gdp_df %>%
 gdp_growth = gdp_df2 %>%
   arrange(Frequency, Date) %>%
   group_by(Frequency) %>%
-  mutate(oldValue=Value) %>%
-  mutate(lagOldValue=dplyr::lag(oldValue, order_by = Date)) %>%
-  mutate(Value=oldValue / lagOldValue -1) %>%
-  mutate(SeriesName='GDPGrowth') %>%
+  mutate(oldValue = Value) %>%
+  mutate(lagOldValue = dplyr::lag(oldValue, order_by = Date)) %>%
+  mutate(Value = oldValue / lagOldValue -1) %>%
+  mutate(SeriesName = 'GDPGrowth') %>%
   select("SeriesName", "Frequency", "Date", "Value", "SourceLink", "SourceName") %>%
-  filter(is.na(Value)==FALSE)
+  filter(is.na(Value) == FALSE)
 
 
 # Load consumer price index data

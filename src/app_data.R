@@ -46,9 +46,29 @@ get_series_data <- function(seriesName, frequency) {
   return(datasets_df)
 }
 
+# Turns date column of series data to string date
+convert_to_string_date_series_data <- function(seriesName, frequency) {
+  datasets_df <- get_series_data(seriesName, frequency)
+  datasets_df[,1] <- format(datasets_df[,1], "%d-%m-%Y")
+  return(datasets_df)
+}
+
 # Generates data frame of dates and values from only series type
 get_series_data_no_frequency <- function(seriesName) {
   datasets_df <- select(filter(total_df, SeriesName == seriesName), Date:Value)
+  return(datasets_df)
+}
+
+# Generates a data frame of the dates and values from list of series types and frequency
+get_series_data_from_list <- function(seriesNames, frequency) {
+  # If frequency is annual, get data df for that frequency
+  if (frequency == "Annual") {
+    datasets_df <- select(filter(filter(total_df, SeriesName == seriesNames), Frequency == "Annual"), SeriesName, Date, Value)
+  } else if (frequency == "Quarter") {
+    datasets_df <- select(filter(filter(total_df, SeriesName == seriesNames), Frequency == "Quarter"), SeriesName, Date, Value)
+  } else {
+    datasets_df <- select(filter(filter(total_df, SeriesName == seriesNames), Frequency == "Month"), SeriesName, Date, Value)
+  }
   return(datasets_df)
 }
 
