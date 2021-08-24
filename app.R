@@ -1,7 +1,11 @@
 ##############################
 # Main app
 ##############################
-# TODO: Fix why compareTypes input condition is always true
+# TODO: Fix why compare types input condition is always true
+# TODO: Fix strange naming of the summary variables
+# TODO: Fix legend not going to bottom
+# TODO: Fix table data frame generating function not working
+# TODO: Add frequency support for compare
 
 
 # Load libraries
@@ -113,7 +117,7 @@ ui <- dashboardPage(skin = "red",
                                 choices = get_series_names(),
                                 selected = get_series_names()[1]),
                     
-                    # Select the frequency of data to plot 
+                    # Select the frequency of data to table
                     radioButtons(inputId = "frequencySummary",
                                  label = strong("Frequency"),
                                  choices = get_frequency_types(get_series_names()[1])),
@@ -136,7 +140,7 @@ ui <- dashboardPage(skin = "red",
                     br(),
                     
                     # Select the frequency of data to plot 
-                    radioButtons(id = "freqComparerBtns", inputId = "frequencyCompare",
+                    radioButtons(inputId = "frequencyCompare",
                                  label = strong("Frequency"),
                                  choices = c("Annual", "Quarter/Month")),
                     
@@ -159,7 +163,8 @@ ui <- dashboardPage(skin = "red",
                 box(
                   title = "Outputs", status = "success", solidHeader = TRUE,
                   width = 12, collapsible = TRUE,
-                  textOutput(outputId = "summaryText")
+                  textOutput(outputId = "summaryText"),
+                  tableOutput(outputId = "summaryTable")
                 )
               ),
               
@@ -272,6 +277,10 @@ server <- function(input, output, session) {
       output$summaryText <- renderText({
         summaries <- paste(input$summaryType, collapse = ", ")
         paste("Summaries: ", summaries)
+      })
+      
+      output$summaryTable <- renderTable({
+        renderTable(generate_summary_dataframe(input$trendTypeSummary, input$frequencySummary))
       })
       
       
