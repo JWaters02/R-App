@@ -25,12 +25,6 @@ get_frequency_types <- function(seriesName) {
   return(dataset)
 }
 
-# Generates all the frequency types from a list of series types
-get_frequency_types_from_list <- function(seriesNames) {
-  datasets_df <- filter(total_df, SeriesName == seriesNames)
-  print(datasets_df)
-}
-
 # Generates the min and max dates of the first data set
 get_first_series_date_extremes <- function() {
   min <- strtoi(format(get_series_date_extremes(get_series_names()[1], get_frequency_types(get_series_names()[1]))[1, 1], "%Y"))
@@ -59,29 +53,6 @@ convert_to_string_date_series_data <- function(seriesName, frequency) {
   return(datasets_df)
 }
 
-# Generates data frame of dates and values from only series type
-get_series_data_no_frequency <- function(seriesName) {
-  datasets_df <- select(filter(total_df, SeriesName == seriesName), Date:Value)
-  return(datasets_df)
-}
-
-# Generates a data frame of the dates and values from list of series types and frequency
-get_series_data_from_list <- function(seriesNames, frequency) {
-  #datasets_df <- select(filter(filter(total_df, SeriesName == seriesNames), Frequency == frequency), SeriesName, Date, Value)
-  if (frequency == "Annual") {
-    datasets_df <- select(filter(filter(total_df, SeriesName == seriesNames), Frequency == "Annual"), SeriesName, Date, Value)
-  } else {
-    datasets_df <- select(filter(filter(total_df, SeriesName == seriesNames), Frequency == "Quarter" | Frequency == "Month"), SeriesName, Date, Value)
-  }
-  return(datasets_df)
-}
-
-# Generates a data frame of the dates and values from a list of series types
-get_series_data_from_list_no_frequency <- function(seriesNames) {
-  datasets_df <- select(filter(total_df, SeriesName == seriesNames), SeriesName, Date, Value)
-  return(datasets_df)
-}
-
 # Gets the source name and link from a specified series
 get_series_sources <- function(seriesName) {
   sourceLinks_df <- distinct(select(filter(total_df, SeriesName == seriesName), SourceLink))
@@ -90,13 +61,10 @@ get_series_sources <- function(seriesName) {
 }
 
 # Gets various summary statistics for specified data
-get_summary_statistics <- function(seriesName, frequency = 'Annual', wantsFrequency) {
-  if (wantsFrequency) {
-    datasets_df <- select(get_series_data(seriesName, frequency), Value)
-  } else {
-    datasets_df <- select(get_series_data_no_frequency(seriesName), Value)
-  }
+get_summary_statistics <- function(seriesName, frequency) {
+  datasets_df <- select(get_series_data(seriesName, frequency), Value)
   quantiles <- quantile(datasets_df[1,], probs = c(.25, .5, .75))
+  print(quantiles)
   
   min <- summarise(datasets_df, min(Value))
   max <- summarise(datasets_df, max(Value))
@@ -111,16 +79,12 @@ get_summary_statistics <- function(seriesName, frequency = 'Annual', wantsFreque
   return(c(min, max, mean, median, var, sd, lq, mq, uq, iqr))
 }
 
-# Gets the first summary statistic from the first type and frequency of the data frame
-get_first_summary_statistics <- function() {
-  return(get_summary_statistics(get_series_names()[1], get_frequency_types(get_series_names()[1]), TRUE)[1])
-}
-
 # Generates the data frame for the table of summary stats for a specified series and frequency
 generate_summary_dataframe <- function(seriesName, frequency) {
   stat_names = c('Minimum', 'Maximum', 'Mean', 'Median', 'Variance', 'Standard Deviation',
                  'Lower Quartile', 'Middle Quartile', 'Upper Quartile', 'Inter Quartile Range')
-  df <- data.frame(stat_names, get_summary_statistics(seriesName, frequency, TRUE))
+  stats_df <- get_summary_statistics(seriesName, frequency)
+  df <- data.frame(stat_names, t(t(stats_df)))
   colnames(df) <- c('Summary', 'Value')
   return(df)
 }

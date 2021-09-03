@@ -1,9 +1,6 @@
 ##############################
 # Functions
 ##############################
-# TODO: Fix legend not being put at bottom of plot
-
-
 # Load libraries
 library(shiny)
 library(stringr)
@@ -37,28 +34,19 @@ convert_monthly_dates <- function(dates_to_convert, match_col, match_regex) {
 }
 
 # Plot the values given to a line graph
-plot_line_data <- function(df, limits, dataName = "Value", isPlottingMultiple = FALSE) {
+plot_line_data <- function(df, limits, dataName = "Value") {
   limits2=c(as.Date(paste0(limits[1],'-01-31')), as.Date(paste0(limits[2],'-12-31')))
-  if (!isPlottingMultiple) {
-    ggplot(data = df) +
-      geom_line(aes(x = as.Date(Date), y = Value), linetype = "solid", color = "red") +
-      scale_x_date(name = "Year",
-                   limits = limits2,
-                   labels = date_format("%Y")) +
-      scale_y_continuous(name = dataName, labels = comma)
-  } else {
-    ggplot(data = df) +
-      geom_line(aes(x = as.Date(Date), y = Value, group = SeriesName, color = SeriesName), linetype = "solid") +
-      theme(legend.position = "bottom") + 
-      scale_x_date(name = "Year",
-                   limits = limits2,
-                   labels = date_format("%Y")) +
-      scale_y_continuous(name = dataName, labels = comma)
-  }
+  ggplot(data = df) +
+    geom_line(aes(x = as.Date(Date), y = Value), linetype = "solid", color = "red") +
+    scale_x_date(name = "Year",
+                 limits = limits2,
+                 labels = date_format("%Y")) +
+    scale_y_continuous(name = dataName, labels = comma)
 }
 
 # Plot the values given to a box plot
 plot_box_data <- function(df) {
   ggplot(data = df) +
-    geom_boxplot(aes(y = Value))
+    geom_boxplot(aes(y = Value), fill = "orange", alpha = 0.2) +
+    scale_y_continuous(labels = comma)
 }
